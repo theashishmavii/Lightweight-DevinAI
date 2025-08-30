@@ -116,3 +116,58 @@ GitHub Actions / API for PR automation.
 
 👉 In short: We’re building an end-to-end agent that acts like a lightweight AI developer, and we’ll grow it layer by layer.
 The UI in Flask will let users upload/select repos, view issues, see fixes, and trigger PRs.
+
+
+
+
+
+
+
+#Project Architecture:
+
+Lightweight-DevinAI/
+│── .gitignore
+│── README.md
+│── requirements.txt
+│── run.py                  # Entry point to start Flask app
+│
+├── app/                     # Main application package
+│   ├── __init__.py          # Initialize Flask app & configs
+│   ├── routes/              # API routes & endpoints
+│   │   ├── __init__.py
+│   │   └── main_routes.py   # UI + API endpoints
+│   │
+│   ├── services/            # Core business logic
+│   │   ├── __init__.py
+│   │   ├── repo_reader.py   # GitHub repo reader + RAG
+│   │   ├── bug_detector.py  # Static analysis + issue detection
+│   │   ├── bug_fixer.py     # Code fixing using LLM
+│   │   └── pr_creator.py    # Pull request creator
+│   │
+│   ├── utils/               # Helper functions
+│   │   ├── __init__.py
+│   │   ├── logger.py        # Custom logging setup
+│   │   └── file_utils.py    # File operations, parsing helpers
+│   │
+│   ├── models/              # LLM & AI-related stuff
+│   │   ├── __init__.py
+│   │   └── rag_engine.py    # Retrieval-Augmented Generation logic
+│   │
+│   ├── templates/           # HTML (for Flask UI)
+│   │   └── index.html
+│   │
+│   └── static/              # CSS, JS, Images
+│       ├── css/
+│       ├── js/
+│       └── images/
+│
+├── tests/                   # Unit & integration tests
+│   ├── __init__.py
+│   ├── test_repo_reader.py
+│   ├── test_bug_detector.py
+│   └── test_bug_fixer.py
+│
+└── docs/                    # Documentation
+    ├── architecture.md
+    ├── setup_guide.md
+    └── api_reference.md
