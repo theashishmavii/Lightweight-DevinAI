@@ -1,0 +1,118 @@
+Project: Autonomous Bug Fixer for Codebases (Lightweight Devin.ai)
+🔹 What we are building
+
+A system (Agentic AI) that:
+
+Reads a GitHub repository (pulls code, structure, dependencies).
+
+Understands the repo using RAG (Retrieval-Augmented Generation) + embeddings for code chunks.
+
+Detects issues using static analysis tools (like pylint, flake8, bandit, etc.) + LLM reasoning.
+
+Suggests fixes & improvements (security, bugs, optimization).
+
+Creates Pull Requests automatically with:
+
+Fix implementation.
+
+Explanation of the fix.
+
+User Interface (Dashboard) to visualize repositories, detected bugs, and generated PRs.
+
+Basically → a mini developer agent that continuously learns repo structure, detects issues, fixes them, and documents its reasoning.
+
+🔹 How we are building it (Layer by Layer)
+Layer 1 – Repo Ingestion
+
+Use GitHub API / GitPython to clone & fetch repositories.
+
+Parse file structure and store metadata.
+
+UI: User inputs repo URL in Flask dashboard.
+
+Layer 2 – Embedding & RAG
+
+Use vector DB (Qdrant, Weaviate, Chroma) to store code embeddings.
+
+Split code into chunks (functions, classes, files).
+
+Enable natural language Q&A about repo (“What does this function do?”).
+
+UI: Show repo structure + allow code search with natural language.
+
+Layer 3 – Bug Detection
+
+Static analysis with tools like:
+
+pylint / flake8 → style & bug detection.
+
+bandit → security issues.
+
+Combine with LLM reasoning to summarize findings.
+
+UI: Dashboard showing detected issues with severity tags.
+
+Layer 4 – Auto Fixing
+
+Agent takes issue + repo context → proposes fix.
+
+Runs tests (if available) or minimal test cases.
+
+Generates code patch.
+
+UI: Show diff (before vs after code).
+
+Layer 5 – PR Creation
+
+Use GitHub API to create branches & PRs.
+
+Add auto-generated explanation of fix.
+
+UI: Button → “Approve & Push PR”.
+
+Layer 6 – Scaling
+
+Multi-agent approach:
+
+One agent for understanding code.
+
+One agent for bug detection.
+
+One agent for fix generation.
+
+One agent for PR explanation & doc writing.
+
+🔹 Tech Stack
+
+Backend: Python (LangChain / LlamaIndex + static analysis tools).
+
+Vector DB: Qdrant / Chroma.
+
+Frontend (UI):
+
+Option A: Flask (simple, easy to extend).
+
+Option B: Streamlit (faster prototyping, minimal effort).
+
+Option C: Next.js + FastAPI (scalable, production ready).
+
+For you → I’d say start with Flask (since you know it), and later migrate if needed.
+
+🔹 Learning Path Before/During Project
+
+GitHub API & GitPython (repo handling).
+
+Vector DBs + embeddings (for code understanding).
+
+Static analysis tools (pylint, bandit, etc.).
+
+LangChain / LlamaIndex (agent orchestration + RAG).
+
+Flask (for UI, repo input, results display).
+
+GitHub Actions / API for PR automation.
+
+(Later) Multi-agent orchestration (LangGraph or crewAI).
+
+👉 In short: We’re building an end-to-end agent that acts like a lightweight AI developer, and we’ll grow it layer by layer.
+The UI in Flask will let users upload/select repos, view issues, see fixes, and trigger PRs.
