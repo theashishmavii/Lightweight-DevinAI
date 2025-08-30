@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.db
+
+# Environment
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Virtual Environment IDEs
+*.swp
+*.swo
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs
+*.log
+logs/
+*.out
+
+# Cache
+.cache/
+*.egg-info/
+dist/
+build/
+
+# Flask
+instance/
+*.db
+*.sqlite3
+
+# Coverage & Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Qdrant / Vector DB (if stored locally)
+qdrant_storage/
+
+# Hugging Face / Models Cache
+~/.cache/huggingface/
+.huggingface/
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Custom
+*.bak
