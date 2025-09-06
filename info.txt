@@ -135,11 +135,13 @@ Lightweight-DevinAI/
 │   ├── __init__.py✔️          # Initialize Flask app & configs
 │   ├── routes/              # API routes & endpoints
 │   │   ├── __init__.py
+|   |   ├── rag_routes.py
 │   │   └── main_routes.py✔️   # UI + API endpoints
 │   │
 │   ├── services/            # Core business logic
 │   │   ├── __init__.py
-│   │   ├── repo_reader.py✔️   # GitHub repo reader + RAG
+│   │   ├── repo_reader.py✔️   # GitHub repo reader
+|   |   ├── rag_service.py
 │   │   ├── bug_detector.py  # Static analysis + issue detection
 │   │   ├── bug_fixer.py     # Code fixing using LLM
 │   │   └── pr_creator.py    # Pull request creator
