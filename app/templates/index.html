@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Lightweight DevinAI - GitHub Repo Viewer & RAG</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <style>
         body {
             padding-top: 50px;
@@ -15,8 +17,15 @@
             margin-top: 30px;
         }
         pre {
-            white-space: pre-wrap; /* Wrap long text */
+            white-space: pre-wrap;
             word-wrap: break-word;
+        }
+        .jstree-default .jstree-node i {
+            font-weight: bold;
+        }
+        #repoTree {
+            max-height: 500px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -24,7 +33,7 @@
 <div class="container">
     <h2 class="text-center mb-4">🛠 Lightweight DevinAI - GitHub Repo Viewer</h2>
 
-    <!-- ---------------- Repo URL Input ---------------- -->
+    <!-- Repo URL Input -->
     <div class="card p-4 shadow-sm mb-4">
         <div class="mb-3">
             <label for="repoUrl" class="form-label">GitHub Repository URL</label>
@@ -33,35 +42,29 @@
         <button class="btn btn-primary w-100" onclick="fetchRepoData()">Fetch Repository</button>
     </div>
 
-    <!-- ---------------- Spinner ---------------- -->
+    <!-- Spinner -->
     <div class="text-center mt-4" id="spinner">
         <div class="spinner-border text-primary" role="status"></div>
         <p class="mt-2">Fetching data...</p>
     </div>
 
-    <!-- ---------------- Repo Structure & Metadata ---------------- -->
+    <!-- Repo Structure, Briefs, and Query -->
     <div id="result" style="display:none;">
-        <div class="row">
-            <!-- Repo Structure -->
-            <div class="col-md-6">
-                <div class="card p-3 shadow-sm">
-                    <h5 id="repoName"></h5>
-                    <p id="repoDescription"></p>
-                    <h6>📁 Files:</h6>
-                    <ul id="fileList" class="list-group"></ul>
-                </div>
-            </div>
-
-            <!-- File Briefs -->
-            <div class="col-md-6" id="briefsPanel">
-                <div class="card p-3 shadow-sm">
-                    <h6>📝 File Briefs:</h6>
-                    <div id="fileBriefs" class="list-group"></div>
-                </div>
-            </div>
+        <!-- Repo Structure -->
+        <div class="card p-3 shadow-sm">
+            <h5 id="repoName"></h5>
+            <p id="repoDescription"></p>
+            <h6>📁 Repository Structure</h6>
+            <div id="repoTree"></div>
         </div>
 
-        <!-- ---------------- Query Section ---------------- -->
+        <!-- File Briefs -->
+        <div class="card p-3 shadow-sm mt-4" id="briefsPanel">
+            <h6>📝 File Briefs:</h6>
+            <div id="fileBriefs" class="list-group"></div>
+        </div>
+
+        <!-- Query Section -->
         <div class="card p-3 shadow-sm mt-4" id="queryPanel">
             <h6>❓ Ask a Query about the Repo</h6>
             <div class="mb-3">
@@ -76,8 +79,55 @@
     </div>
 </div>
 
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
 <script>
-    let currentFilePaths = []; // Store fetched repo file paths
+    let currentFilePaths = [];
+
+    // ---------------- Convert file paths to jsTree format ----------------
+    function buildTreeData(paths) {
+        let tree = [];
+
+        paths.forEach(fullPath => {
+            let parts = fullPath.split('/');
+            let currentLevel = tree;
+
+            parts.forEach((part, index) => {
+                let existing = currentLevel.find(node => node.text === part);
+                const isFile = index === parts.length - 1 && !fullPath.endsWith('/');
+
+                if (!existing) {
+                    existing = {
+                        text: part,
+                        children: isFile ? false : [],
+                        icon: isFile 
+                            ? "bi bi-file-earmark-text-fill text-success" 
+                            : "bi bi-folder-fill text-primary fw-bold"
+                    };
+                    currentLevel.push(existing);
+                }
+
+                // Go deeper only if it's a folder
+                if (!isFile) currentLevel = existing.children;
+            });
+        });
+
+        return tree;
+    }
+
+    function renderTree(paths) {
+        const treeData = buildTreeData(paths);
+        $('#repoTree').jstree("destroy");
+        $('#repoTree').jstree({
+            core: { 
+                data: treeData, 
+                themes: { icons: true, stripes: true }, 
+                check_callback: true 
+            },
+            plugins: ["wholerow", "types", "themes"]
+        });
+    }
 
     // ---------------- Fetch Repo Structure ----------------
     async function fetchRepoData() {
@@ -86,22 +136,16 @@
         const result = document.getElementById("result");
         const repoName = document.getElementById("repoName");
         const repoDescription = document.getElementById("repoDescription");
-        const fileList = document.getElementById("fileList");
         const fileBriefsDiv = document.getElementById("fileBriefs");
 
-        if (!repoUrl) {
-            alert("Please enter a GitHub repository URL.");
-            return;
-        }
+        if (!repoUrl) { alert("Please enter a GitHub repository URL."); return; }
 
         spinner.style.display = "block";
         result.style.display = "none";
-        fileList.innerHTML = "";
         fileBriefsDiv.innerHTML = "";
         currentFilePaths = [];
 
         try {
-            // ---------------- Call Backend to Read Repo ----------------
             const response = await fetch("/read_repo", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -110,27 +154,18 @@
             const data = await response.json();
             spinner.style.display = "none";
 
-            if (!response.ok) {
-                alert("Error: " + data.error);
-                return;
-            }
+            if (!response.ok) { alert("Error: " + data.error); return; }
 
-            // Display Repo Metadata
+            // Display Metadata
             repoName.textContent = `📦 ${data.repo_name}`;
             repoDescription.textContent = data.description || "No description available.";
 
-            // Display File Structure
-            data.files.forEach(file => {
-                const li = document.createElement("li");
-                li.className = "list-group-item";
-                li.textContent = file;
-                fileList.appendChild(li);
-                currentFilePaths.push(file);
-            });
-
+            // Render jsTree
+            currentFilePaths = data.files;
+            renderTree(currentFilePaths);
             result.style.display = "block";
 
-            // ---------------- Fetch File Briefs from RAG ----------------
+            // Fetch file briefs
             const briefsResp = await fetch("/rag/file_briefs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -151,16 +186,12 @@
         }
     }
 
-    // ---------------- Submit Query to RAG ----------------
+    // ---------------- Submit Query ----------------
     async function submitQuery() {
         const query = document.getElementById("queryInput").value;
         const queryAnswer = document.getElementById("queryAnswer");
 
-        if (!query) {
-            alert("Please type a query.");
-            return;
-        }
-
+        if (!query) { alert("Please type a query."); return; }
         queryAnswer.textContent = "Fetching answer...";
 
         try {
@@ -177,7 +208,6 @@
             }
 
             queryAnswer.textContent = data.answer;
-
         } catch (error) {
             queryAnswer.textContent = "Request failed: " + error.message;
         }
