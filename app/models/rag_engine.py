@@ -8,24 +8,19 @@ from typing import List, Dict, Tuple, Optional
 import chromadb
 from chromadb.utils import embedding_functions
 
-from openai import OpenAI
+import ollama
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 # ---------------- CONFIG ----------------
-SUPPORTED_EXTENSIONS = (".py", ".html", ".js", ".md", ".txt")
+SUPPORTED_EXTENSIONS = (".py", ".html", ".js", ".md", ".txt", ".json", ".yaml", ".yml", ".css", ".java",
+                        ".c", ".cpp", ".rb", ".go", ".rs", ".ts", ".tsx", ".jsx", ".xml", ".ini", ".cfg",
+                        ".toml", ".docx", ".csv", ".ipynb")
 CHROMA_DIR_DEFAULT = "chroma_db"
 COLLECTION_NAME = "repo_docs"
-EMBEDDING_MODEL = "text-embedding-3-small"
-CHAT_MODEL = "gpt-4o-mini"
 DEFAULT_CHUNK_SIZE = 800
 DEFAULT_CHUNK_OVERLAP = 100
-
-# Get OpenAI API key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("Please set the environment variable OPENAI_API_KEY")
 
 # ---------------- HELPERS ----------------
 def _is_supported(path: str) -> bool:
@@ -68,9 +63,6 @@ def generate_file_briefs(file_paths: List[str]) -> List[Dict]:
     Reads the whole file, asks LLM to summarize it briefly.
     Returns a list of dicts with: path, extension, brief (LLM summary)
     """
-    import openai
-    client = OpenAI(api_key=OPENAI_API_KEY)
-
     briefs = []
     for path in file_paths:
         if not _is_supported(path) or not os.path.exists(path):
@@ -94,13 +86,11 @@ def generate_file_briefs(file_paths: List[str]) -> List[Dict]:
                     Summary:
                     """
         try:
-            resp = client.chat.completions.create(
-                model=CHAT_MODEL,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-                max_tokens=300
+            resp = ollama.chat(
+                model="phi3:mini",
+                messages=[{"role": "user", "content": prompt}]
             )
-            summary = resp.choices[0].message.content
+            summary = resp["message"]["content"]
         except Exception as e:
             summary = f"Error generating summary: {e}"
 
@@ -114,9 +104,8 @@ def generate_file_briefs(file_paths: List[str]) -> List[Dict]:
 # ---------------- CHROMA INIT ----------------
 def init_chroma(persist_dir=CHROMA_DIR_DEFAULT):
     """Initialize Chroma persistent client and collection."""
-    ef = embedding_functions.OpenAIEmbeddingFunction(
-        api_key=OPENAI_API_KEY,
-        model_name=EMBEDDING_MODEL
+    ef = embedding_functions.SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
     )
     client = chromadb.PersistentClient(path=persist_dir)
     collection = client.get_or_create_collection(
@@ -183,8 +172,7 @@ def retrieve_context(query: str, top_k: int = 4, persist_dir: str = CHROMA_DIR_D
 
 # ---------------- LLM ANSWER ----------------
 def generate_answer_from_context(query: str, context_docs: List[str]) -> str:
-    """Use OpenAI chat completion to answer query based on retrieved context."""
-    client = OpenAI(api_key=OPENAI_API_KEY)
+    """Use Ollama chat model to answer query based on retrieved context."""
 
     context_text = "\n\n---\n\n".join(context_docs) if context_docs else "No context available."
 
@@ -201,16 +189,14 @@ def generate_answer_from_context(query: str, context_docs: List[str]) -> str:
 
                 Answer:
                 """
-    resp = client.chat.completions.create(
-        model=CHAT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,
-        max_tokens=300
+    resp = ollama.chat(
+        model="phi3:mini",
+        messages=[{"role": "user", "content": prompt}]
     )
     try:
-        return resp.choices[0].message.content.strip()
-    except Exception:
-        return resp.choices[0].get("text", "").strip()
+        return resp.get("message", {}).get("content", "")
+    except Exception as e:
+        return f"Error generating answer: {e}"
 
 # ---------------- FULL PIPELINE ----------------
 def rag_query_from_file_list(
