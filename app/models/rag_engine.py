@@ -8,7 +8,7 @@ from typing import List, Dict, Tuple, Optional
 import chromadb
 from chromadb.utils import embedding_functions
 
-import ollama
+from groq import Groq
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
@@ -86,11 +86,15 @@ def generate_file_briefs(file_paths: List[str]) -> List[Dict]:
                     Summary:
                     """
         try:
-            resp = ollama.chat(
-                model="phi3:mini",
-                messages=[{"role": "user", "content": prompt}]
+            client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+            resp = client.chat.completions.create(
+                model="llama-3.1-8b-instant",  # or "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                max_tokens=1024
             )
-            summary = resp["message"]["content"]
+            summary = resp.choices[0].message.content
         except Exception as e:
             summary = f"Error generating summary: {e}"
 
@@ -172,7 +176,7 @@ def retrieve_context(query: str, top_k: int = 4, persist_dir: str = CHROMA_DIR_D
 
 # ---------------- LLM ANSWER ----------------
 def generate_answer_from_context(query: str, context_docs: List[str]) -> str:
-    """Use Ollama chat model to answer query based on retrieved context."""
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
     context_text = "\n\n---\n\n".join(context_docs) if context_docs else "No context available."
 
@@ -189,12 +193,14 @@ def generate_answer_from_context(query: str, context_docs: List[str]) -> str:
 
                 Answer:
                 """
-    resp = ollama.chat(
-        model="phi3:mini",
-        messages=[{"role": "user", "content": prompt}]
+    resp = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=512
     )
     try:
-        return resp.get("message", {}).get("content", "")
+        return resp.choices[0].message.content
     except Exception as e:
         return f"Error generating answer: {e}"
 
