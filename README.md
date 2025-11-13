@@ -43,11 +43,19 @@ Data flow at a glance:
 
 ---
 
-### Live Demo Video
+### Demo Screenshots
 
-Add your demo link here once available:
+- First: Enter Repo URL
+<img width="2802" height="599" alt="Screenshot 2025-11-13 224322" src="https://github.com/user-attachments/assets/49c0615e-925d-4b67-9e89-b2d04cc3b793" />
 
-`[Demo: Lightweight DevinAI in action](https://your-demo-link.example)`
+- Second: Get Repo Structure instantly
+<img width="2813" height="1496" alt="Screenshot 2025-11-13 224342" src="https://github.com/user-attachments/assets/152d82b1-15a8-45e5-9661-a061e887b8db" />
+
+- Third: Get brief about every file in the repo
+<img width="2715" height="1482" alt="Screenshot 2025-11-13 224447" src="https://github.com/user-attachments/assets/3875254a-26bf-422e-a8f9-e30683aff085" />
+
+- Fourth: Can ask query related to repo or any file/folder in it
+<img width="2761" height="1513" alt="Screenshot 2025-11-13 224721" src="https://github.com/user-attachments/assets/736d4104-31e5-4949-9f2b-3b93b2dcac59" />
 
 ---
 
